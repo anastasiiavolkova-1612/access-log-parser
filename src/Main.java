@@ -29,8 +29,8 @@ public class Main {
                     BufferedReader reader = new BufferedReader(fileReader);
                     String line;
                     int lineCount = 0;
-                    int maxLength = 0;
-                    int minLength = Integer.MAX_VALUE;
+                    int googlebotCount = 0;
+                    int yandexbotCount = 0;
 
                     while ((line = reader.readLine()) != null) {
                         lineCount++;
@@ -39,19 +39,45 @@ public class Main {
                         if (length > 1024) {
                             throw new RuntimeException("В файле найдена строка длиной более 1024 символов");
                         }
+                        String[] parts = line.split("\"");
+                        if (parts.length > 1) {
+                            String userAgent = parts[parts.length - 1];
 
-                        if (length > maxLength) {
-                            maxLength = length;
-                        }
+                            int firstBracket = userAgent.indexOf('(');
+                            int lastBracket = userAgent.indexOf(')');
 
-                        if (length < minLength) {
-                            minLength = length;
+                            if (firstBracket != -1 && lastBracket != -1) {
+                                String fragmentInBrackets = userAgent.substring(firstBracket + 1, lastBracket);
+                                String[] fragments = fragmentInBrackets.split(";");
+
+                                if (fragments.length >= 2) {
+                                    String botFragment = fragments[1].trim();
+
+                                    int slashIndex = botFragment.indexOf('/');
+                                    String botName = "";
+                                    if (slashIndex != -1) {
+                                        botName = botFragment.substring(0, slashIndex);
+                                    } else {
+                                        botName = botFragment;
+                                    }
+
+                                    if (botName.equals("Googlebot")) {
+                                        googlebotCount++;
+                                    } else if (botName.equals("YandexBot")) {
+                                        yandexbotCount++;
+                                    }
+                                }
+                            }
                         }
                     }
 
                     System.out.println("Общее количество строк в файле: " + lineCount);
-                    System.out.println("Длина самой длинной строки в файле: " + maxLength);
-                    System.out.println("Длина самой короткой строки в файле: " + minLength);
+                    double totalRequests = lineCount;
+                    double googleShare = (double) googlebotCount / totalRequests;
+                    double yandexShare = (double) yandexbotCount / totalRequests;
+
+                    System.out.println("Доля запросов от Googlebot: " + googleShare);
+                    System.out.println("Доля запросов от YandexBot: " + yandexShare);
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
