@@ -3,6 +3,8 @@ import java.util.Scanner;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Map;
+import java.util.Set;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -65,7 +67,7 @@ public class Main {
                             skippedLines++;
                             statistics.addError(e);
                         }}
-                    int trafficRate = statistics.getTrafficRate();
+                    long trafficRate = statistics.getTrafficRate();
 
                     System.out.println();
                     System.out.println("Средний объем трафика за час: " + trafficRate + " байт/час");
@@ -88,19 +90,40 @@ public class Main {
                         System.out.println(entry.getKey() + ": " + entry.getValue() + " запросов");
                     }
                     System.out.println();
+                    System.out.println("Статистика по браузерам:");
+                    Map<String, Integer> browserStats = statistics.getBrowserCounts();
+                    for (Map.Entry<String, Integer> entry : browserStats.entrySet()) {
+                        System.out.println(entry.getKey() + ": " + entry.getValue() + " запросов");
+                    }
+                    System.out.println();
                     System.out.println("Статистика по операционным системам:");
                     Map<String, Integer> osStats = statistics.getOsCounts();
                     for (Map.Entry<String, Integer> entry : osStats.entrySet()) {
                         System.out.println(entry.getKey() + ": " + entry.getValue() + " запросов");
                     }
                     System.out.println();
-                    System.out.println("Статистика по браузерам:");
-                    Map<String, Integer> browserStats = statistics.getBrowserCounts();
-                    for (Map.Entry<String, Integer> entry : browserStats.entrySet()) {
-                        System.out.println(entry.getKey() + ": " + entry.getValue() + " запросов");
+                    System.out.println("Статистика по долям операционных систем:");
+                    Map<String, Double> osProportions = statistics.getOsProportionStatistics();
+                    for (Map.Entry<String, Double> entry : osProportions.entrySet()) {
+                        System.out.printf("%s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
                     }
 
+                    System.out.println();
+                    System.out.println("Список существующих страниц (код 200):");
+                    Set<String> pages = statistics.getAllExistingPages();
+                    int pageCount = 0;
+                    for (String page : pages) {
+                        pageCount++;
+                        System.out.println("- " + page);
 
+                        if (pageCount == 10 && pages.size() > 10) {
+                            System.out.println("... (показаны первые 10 из " + pages.size() + " страниц)");
+                            System.out.println("Показать остальные? (да/нет)");
+                            if (!scanner.nextLine().equalsIgnoreCase("да")) {
+                                break;
+                            }
+                        }
+                    }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

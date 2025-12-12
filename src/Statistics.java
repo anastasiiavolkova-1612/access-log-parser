@@ -1,30 +1,34 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Statistics {
-    private int totalTraffic;
+    private long totalTraffic;
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
     private final Map<String, Integer> osCounts;
     private final Map<String, Integer> browserCounts;
     private final Map<HttpMethod, Integer> methodCounts;
     private final Map<String, Integer> errorCounts;
+    private final Set<String> existingPages;
 
 
     public Statistics() {
-        this.totalTraffic = 0;
+        this.totalTraffic = 0L;
         this.minTime = null;
         this.maxTime = null;
         this.osCounts = new HashMap<>();
         this.browserCounts = new HashMap<>();
         this.methodCounts = new HashMap<>();
         this.errorCounts = new HashMap<>();
+        this.existingPages = new HashSet<>();
     }
 
     public void addEntry(LogEntry entry) {
-        this.totalTraffic += (int) entry.getResponseSize();
+        this.totalTraffic += entry.getResponseSize();
         LocalDateTime entryTime = entry.getTime();
 
         if (this.minTime == null || entryTime.isBefore(this.minTime)) {
@@ -44,27 +48,45 @@ public class Statistics {
 
         HttpMethod method = entry.getMethod();
         methodCounts.put(method, methodCounts.getOrDefault(method, 0) + 1);
+        if (entry.getResponseCode() == 200) {
+            existingPages.add(entry.getPath());
+        }
     }
     public void addError(Exception e) {
         String errorMessage = e.getMessage();
         if (errorMessage == null) {
-            errorMessage = e.getClass().getName(); // Если сообщения нет, берем имя класса исключения
+            errorMessage = e.getClass().getName();
         }
         errorCounts.put(errorMessage, errorCounts.getOrDefault(errorMessage, 0) + 1);
     }
-    public int getTrafficRate() {
-        if (minTime == null || maxTime == null) {
-            return 0;
-        }
-
+    public long getTrafficRate() {
+        if (minTime == null || maxTime == null) return 0L;
         Duration duration = Duration.between(minTime, maxTime);
-        int hours = (int) duration.toHours();
+        long hours = duration.toHours();
+        if (hours == 0) return totalTraffic;
+        return totalTraffic / hours;
+    }
+    public Set<String> getAllExistingPages() {
+        return existingPages;
+    }
+    public Map<String, Double> getOsProportionStatistics() {
+        Map<String, Double> osProportions = new HashMap<>();
+        double totalOsCount = 0;
 
-        if (hours == 0) {
-            return totalTraffic;
+        for (int count : osCounts.values()) {
+            totalOsCount += count;
         }
 
-        return totalTraffic / hours;
+        if (totalOsCount == 0) {
+            return osProportions;
+        }
+
+        for (Map.Entry<String, Integer> entry : osCounts.entrySet()) {
+            double proportion = (double) entry.getValue() / totalOsCount;
+            osProportions.put(entry.getKey(), proportion);
+        }
+
+        return osProportions;
     }
     public Map<String, Integer> getOsCounts() {
         return osCounts;
