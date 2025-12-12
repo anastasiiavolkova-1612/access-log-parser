@@ -14,6 +14,7 @@ public class Statistics {
     private final Map<HttpMethod, Integer> methodCounts;
     private final Map<String, Integer> errorCounts;
     private final Set<String> existingPages;
+    private final Set<String> nonExistentPages;
 
 
     public Statistics() {
@@ -25,6 +26,7 @@ public class Statistics {
         this.methodCounts = new HashMap<>();
         this.errorCounts = new HashMap<>();
         this.existingPages = new HashSet<>();
+        this.nonExistentPages = new HashSet<>();
     }
 
     public void addEntry(LogEntry entry) {
@@ -50,6 +52,9 @@ public class Statistics {
         methodCounts.put(method, methodCounts.getOrDefault(method, 0) + 1);
         if (entry.getResponseCode() == 200) {
             existingPages.add(entry.getPath());
+        }
+        else if (entry.getResponseCode() == 404) {
+            nonExistentPages.add(entry.getPath());
         }
     }
     public void addError(Exception e) {
@@ -87,6 +92,29 @@ public class Statistics {
         }
 
         return osProportions;
+    }
+    public Set<String> getAllNonExistentPages() {
+        return nonExistentPages;
+    }
+
+    public Map<String, Double> getBrowserProportionStatistics() {
+        Map<String, Double> browserProportions = new HashMap<>();
+        double totalBrowserCount = 0;
+
+        for (int count : browserCounts.values()) {
+            totalBrowserCount += count;
+        }
+
+        if (totalBrowserCount == 0) {
+            return browserProportions;
+        }
+
+        for (Map.Entry<String, Integer> entry : browserCounts.entrySet()) {
+            double proportion = (double) entry.getValue() / totalBrowserCount;
+            browserProportions.put(entry.getKey(), proportion);
+        }
+
+        return browserProportions;
     }
     public Map<String, Integer> getOsCounts() {
         return osCounts;

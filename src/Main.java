@@ -96,6 +96,12 @@ public class Main {
                         System.out.println(entry.getKey() + ": " + entry.getValue() + " запросов");
                     }
                     System.out.println();
+                    System.out.println("Статистика по долям браузеров:");
+                    Map<String, Double> browserProportions = statistics.getBrowserProportionStatistics();
+                    for (Map.Entry<String, Double> entry : browserProportions.entrySet()) {
+                        System.out.printf("%s: %.2f%%%n", entry.getKey(), entry.getValue() * 100);
+                    }
+                    System.out.println();
                     System.out.println("Статистика по операционным системам:");
                     Map<String, Integer> osStats = statistics.getOsCounts();
                     for (Map.Entry<String, Integer> entry : osStats.entrySet()) {
@@ -121,6 +127,26 @@ public class Main {
                             System.out.println("Показать остальные? (да/нет)");
                             if (!scanner.nextLine().equalsIgnoreCase("да")) {
                                 break;
+                            }
+                        }
+                    }
+                    System.out.println();
+                    System.out.println("Список несуществующих страниц (код 404):");
+                    Set<String> nonExistentPages = statistics.getAllNonExistentPages();
+                    if (nonExistentPages.isEmpty()) {
+                        System.out.println("Не найдено.");
+                    } else {
+                        int pageCountEx = 0;
+                        for (String page : nonExistentPages) {
+                            pageCountEx++;
+                            System.out.println("- " + page);
+
+                            if (pageCountEx == 10 && nonExistentPages.size() > 10) {
+                                System.out.println("... (показаны первые 10 из " + nonExistentPages.size() + " несуществующих страниц)");
+                                System.out.println("Показать остальные? (да/нет)");
+                                if (!scanner.nextLine().equalsIgnoreCase("да")) {
+                                    break;
+                                }
                             }
                         }
                     }
